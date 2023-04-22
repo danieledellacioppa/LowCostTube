@@ -26,12 +26,21 @@ import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    Context context ;
+    Context context;
+    MapView mapView;
+    MyLocationNewOverlay mLocationOverlay;
+
+
+    private RotationGestureOverlay mRotationGestureOverlay; //variable to allow rotation gestures
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -45,16 +54,50 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
         });
 
+        Context ctx = getApplicationContext();  // here we get the context using
+        // getApplicationContext() rather than assigning
+        // it to "this"
+
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        // setting this before the layout is inflated is a good idea
+        // it 'should' ensure that the map has a writable location for the map cache, even without
+        // permissions if no tiles are displayed, you can try overriding the cache path using
+        // Configuration.getInstance().setCachePath
+        // see also StorageUtils note, the load method also sets the HTTP User Agent to your
+        // application's package name, abusing osm's tile servers will get you banned based on
+        // this string
+
         context = this;
 
         setContentView(R.layout.activity_main);
 //        Toast.makeText(context, "onCreate", Toast.LENGTH_SHORT).show();
         Log.d("MainActivity", "onCreate");
 
-        MapView mapView;
         mapView = findViewById(R.id.mapView);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
+
+        IMapController mapController = mapView.getController();
+        mapController.setZoom(12.0);
+        GeoPoint startPoint = new GeoPoint(51.5074, -0.1278);
+        mapController.setCenter(startPoint);
+
+        mRotationGestureOverlay = new RotationGestureOverlay(mapView);
+        mRotationGestureOverlay.setEnabled(true);
+        mapView.setMultiTouchControls(true);
+        mapView.getOverlays().add(this.mRotationGestureOverlay);
+
+        showMyLocation();           //show device location on the map
+    }
+
+    public void showMyLocation()
+    {
+        //Here we just show a little yellow man on any Icon representing the actual device position
+        //which gets updated as the device moves around the world. When moving then the
+        // icon becomes a grey arrow point the movement's direction
+        this.mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context),mapView); //we get the device location
+        this.mLocationOverlay.enableMyLocation();       //we enable it
+        mapView.getOverlays().add(this.mLocationOverlay);   //we overlay it on the map
     }
 
     private final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
@@ -76,84 +119,6 @@ public class MainActivity extends AppCompatActivity {
                     this,
                     permissionsToRequest.toArray(new String[0]),
                     REQUEST_PERMISSIONS_REQUEST_CODE);
-        }
-    }
-
-    public class MapFragment extends Fragment implements MapListener {
-
-        private MapView mapView;
-
-
-        public View onCreateView(LayoutInflater inflater,ViewGroup container,Bundle savedInstanceState)
-        {
-            Toast.makeText(context, "MapFragment", Toast.LENGTH_SHORT).show();
-            requestPermissionsIfNecessary(new String[] {
-                    //current location
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    // WRITE_EXTERNAL_STORAGE is required in order to show the map
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            });
-
-            View view = inflater.inflate(R.layout.activity_main, container, false);
-            mapView = findViewById(R.id.mapView);
-            mapView.setTileSource(TileSourceFactory.MAPNIK);
-            mapView.setMultiTouchControls(true);
-            return view;
-        }
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            Log.d("MapFragment", "onCreate");
-            Toast.makeText(context, "onCreate", Toast.LENGTH_SHORT).show();
-            Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
-
-            IMapController mapController = mapView.getController();
-            mapController.setZoom(12.0);
-            GeoPoint startPoint = new GeoPoint(51.5074, -0.1278);
-            mapController.setCenter(startPoint);
-
-            // ...
-        }
-
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            super.onViewCreated(view, savedInstanceState);
-            mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-            mapView.setMultiTouchControls(true);
-            mapView.getController().setZoom(15.0);
-            mapView.getController().setCenter(new GeoPoint(51.5074, -0.1278));
-        }
-
-        @Override
-        public boolean onScroll(ScrollEvent event) {
-            // Esempio di operazione eseguita quando si fa lo scroll sulla mappa
-            return false;
-        }
-
-        @Override
-        public boolean onZoom(ZoomEvent event) {
-            // Esempio di operazione eseguita quando si fa lo zoom sulla mappa
-            return false;
-        }
-
-        @Override
-        public void onActivityCreated(Bundle savedInstanceState) {
-            super.onActivityCreated(savedInstanceState);
-        }
-
-        public void onResume() {
-            super.onResume();
-            mapView.onResume();
-        }
-
-        public void onPause() {
-            super.onPause();
-            mapView.onPause();
-        }
-
-        public void onDestroy() {
-            super.onDestroy();
-//            mapView.onDestroy();
         }
     }
 
