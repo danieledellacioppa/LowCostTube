@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.caverock.androidsvg.BuildConfig;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
@@ -30,7 +31,17 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -121,5 +132,17 @@ public class MainActivity extends AppCompatActivity {
                     REQUEST_PERMISSIONS_REQUEST_CODE);
         }
     }
+
+    public class TfLJourneyRequest {
+        public LatLng from;
+        public LatLng to;
+        public LocalDate date;
+        public LocalTime time;
+        public String mode = "public";
+        public Boolean nationalSearch = true;
+        public Boolean alternativeWalking = true;
+        public String walkingSpeed = "average";
+    }
+
 
 }
