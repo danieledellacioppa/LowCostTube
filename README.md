@@ -3,7 +3,7 @@ LowCostTube is an Android app that provides affordable travel options for naviga
 
 This project is currently in development so at the moment what it does is:
 * displaying all the bus stops for the 24 bus line on an OSMDroid map.
- - this is just to have a taste of Retrofit since I've never used it before
+   - this is just to have a taste of Retrofit since I've never used it before
 
 ## Dependencies
 
