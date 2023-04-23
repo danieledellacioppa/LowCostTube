@@ -29,6 +29,7 @@ import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
@@ -105,7 +106,16 @@ public class MainActivity extends AppCompatActivity {
                 for (StopPoint stopPoint : stopPoints)
                 {
                     Log.d("stop-point-name", stopPoint.getCommonName()+", LAT= " + stopPoint.getLatitude() + ", LON= " + stopPoint.getLongitude()+", TYPE= " + stopPoint.getPlaceType());
+
+                    Marker marker = new Marker(mapView);
+                    marker.setPosition(new GeoPoint(stopPoint.getLatitude(), stopPoint.getLongitude()));
+                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    marker.setTitle(stopPoint.getCommonName());
+                    mapView.getOverlays().add(marker);
                 }
+
+                mapView.invalidate();
+
             }
 
             @Override
