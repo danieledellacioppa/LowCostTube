@@ -1,7 +1,9 @@
 # LowCostTube
 LowCostTube is an Android app that provides affordable travel options for navigating London using public transportation. The app prioritizes cost-effective journeys, utilizing TfL's services and the osmdroid map library
 
-This project is currently in development and aims to display all the bus stops for the 24 bus line on an OSMDroid map.
+This project is currently in development so at the moment what it does is:
+* displaying all the bus stops for the 24 bus line on an OSMDroid map.
+ - this is just to have a taste of Retrofit since I've never used it before
 
 ## Dependencies
 
@@ -10,7 +12,7 @@ This project is currently in development and aims to display all the bus stops f
 
 ## Usage
 
-To use this app, simply run it on an Android device or emulator. The app will retrieve the bus stop data from the TFL API using Retrofit and display it on the map using OSMDroid.
+To use this app, simply run it on an Android device or emulator. The app will retrieve the bus stop data from the TFL API using Retrofit and display it on the map using OSMDroid. Again this is not the final use. It's just to test Retrofit and display TFL bus stops on OSMDroid map.
 
 ## Code Explanation
 
