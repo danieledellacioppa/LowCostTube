@@ -65,50 +65,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-
-
-        requestPermissionsIfNecessary(new String[] {
-                //current location
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                // WRITE_EXTERNAL_STORAGE is required in order to show the map
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-        });
-
-        Context ctx = getApplicationContext();  // here we get the context using
-        // getApplicationContext() rather than assigning
-        // it to "this"
-
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        // setting this before the layout is inflated is a good idea
-        // it 'should' ensure that the map has a writable location for the map cache, even without
-        // permissions if no tiles are displayed, you can try overriding the cache path using
-        // Configuration.getInstance().setCachePath
-        // see also StorageUtils note, the load method also sets the HTTP User Agent to your
-        // application's package name, abusing osm's tile servers will get you banned based on
-        // this string
-
+        requestPermissions();
+        ensureMapHasWritableLocation();
         context = this;
-
         setContentView(R.layout.activity_main);
-//        Toast.makeText(context, "onCreate", Toast.LENGTH_SHORT).show();
+
         Log.d("MainActivity", "onCreate");
 
-        mapView = findViewById(R.id.mapView);
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
-        mapView.setMultiTouchControls(true);
-
-        IMapController mapController = mapView.getController();
-        mapController.setZoom(12.0);
-        GeoPoint startPoint = new GeoPoint(51.5074, -0.1278);
-        mapController.setCenter(startPoint);
-
-        mRotationGestureOverlay = new RotationGestureOverlay(mapView);
-        mRotationGestureOverlay.setEnabled(true);
-        mapView.setMultiTouchControls(true);
-        mapView.getOverlays().add(this.mRotationGestureOverlay);
+        setupMap();
 
         showMyLocation();           //show device location on the map
 
+        RetrofitHardCodedPrompt();
+
+    }
+
+    private void RetrofitHardCodedPrompt() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.tfl.gov.uk/")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -122,17 +94,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<StopPoint>> call, Response<List<StopPoint>> response) {
                 if (!response.isSuccessful()) {
-                    Log.d("MainActivity", "onResponse: " + response.code());
+                    Log.d("MainActivity", "onResponse: FAILED" + response.code());
                     return;
                 }
 
                 List<StopPoint> stopPoints = response.body();
 
-                // visualizza la lista di stopPoints nella TextView
                     Log.d("stop-points", stopPoints.toString());
 
-                for (StopPoint stopPoint : stopPoints) {
-                    Log.d("stop-point-name", stopPoint.getCommonName()+", LAT= " + stopPoint.getLatitude() + ", LON= " + stopPoint.getLongitude());
+                for (StopPoint stopPoint : stopPoints)
+                {
+                    Log.d("stop-point-name", stopPoint.getCommonName()+", LAT= " + stopPoint.getLatitude() + ", LON= " + stopPoint.getLongitude()+", TYPE= " + stopPoint.getPlaceType());
                 }
             }
 
@@ -141,7 +113,46 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("MainActivity", "onFailure: " + t.getMessage());
             }
         });
+    }
 
+    private void setupMap()
+    {
+        mapView = findViewById(R.id.mapView);
+        mapView.setTileSource(TileSourceFactory.MAPNIK);
+        mapView.setMultiTouchControls(true);
+
+        IMapController mapController = mapView.getController();
+        mapController.setZoom(12.0);
+        GeoPoint startPoint = new GeoPoint(51.5074, -0.1278);
+        mapController.setCenter(startPoint);
+
+        mRotationGestureOverlay = new RotationGestureOverlay(mapView);
+        mRotationGestureOverlay.setEnabled(true);
+        mapView.getOverlays().add(this.mRotationGestureOverlay);
+    }
+
+    private void ensureMapHasWritableLocation() {
+        Context ctx = getApplicationContext();  // here we get the context using
+        // getApplicationContext() rather than assigning
+        // it to "this"
+
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        // setting this before the layout is inflated is a good idea
+        // it 'should' ensure that the map has a writable location for the map cache, even without
+        // permissions if no tiles are displayed, you can try overriding the cache path using
+        // Configuration.getInstance().setCachePath
+        // see also StorageUtils note, the load method also sets the HTTP User Agent to your
+        // application's package name, abusing osm's tile servers will get you banned based on
+        // this string
+    }
+
+    private void requestPermissions() {
+        requestPermissionsIfNecessary(new String[] {
+                //current location
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                // WRITE_EXTERNAL_STORAGE is required in order to show the map
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        });
     }
 
     public class StopPoint {
@@ -156,6 +167,14 @@ public class MainActivity extends AppCompatActivity {
 
         @SerializedName("lon")
         private double longitude;
+
+        @SerializedName("placeType")
+        private String placeType;
+
+        public String getPlaceType() {
+            return placeType;
+        }
+
 
         public String getId() {
             return id;
