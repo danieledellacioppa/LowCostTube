@@ -40,11 +40,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -104,7 +108,79 @@ public class MainActivity extends AppCompatActivity {
         mapView.getOverlays().add(this.mRotationGestureOverlay);
 
         showMyLocation();           //show device location on the map
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.tfl.gov.uk/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        TflApi api = retrofit.create(TflApi.class);
+
+        Call<List<StopPoint>> call = api.getStopPoints();
+
+        call.enqueue(new Callback<List<StopPoint>>() {
+            @Override
+            public void onResponse(Call<List<StopPoint>> call, Response<List<StopPoint>> response) {
+                if (!response.isSuccessful()) {
+                    Log.d("MainActivity", "onResponse: " + response.code());
+                    return;
+                }
+
+                List<StopPoint> stopPoints = response.body();
+
+                // visualizza la lista di stopPoints nella TextView
+                    Log.d("stop-points", stopPoints.toString());
+
+                for (StopPoint stopPoint : stopPoints) {
+                    Log.d("stop-point-name", stopPoint.getCommonName()+", LAT= " + stopPoint.getLatitude() + ", LON= " + stopPoint.getLongitude());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<StopPoint>> call, Throwable t) {
+                Log.d("MainActivity", "onFailure: " + t.getMessage());
+            }
+        });
+
     }
+
+    public class StopPoint {
+        @SerializedName("id")
+        private String id;
+
+        @SerializedName("commonName")
+        private String commonName;
+
+        @SerializedName("lat")
+        private double latitude;
+
+        @SerializedName("lon")
+        private double longitude;
+
+        public String getId() {
+            return id;
+        }
+
+        public String getCommonName() {
+            return commonName;
+        }
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+    }
+
+
+    public interface TflApi {
+        @GET("line/24/stoppoints")
+        Call<List<StopPoint>> getStopPoints();
+    }
+
+
 
     public void showMyLocation()
     {
@@ -149,71 +225,71 @@ public class MainActivity extends AppCompatActivity {
         public String walkingSpeed = "average";
     }
 
-    public interface TFLService {
-        // Other API calls...
+//    public interface TFLService {
+//        // Other API calls...
+//
+//        @GET("Journey/JourneyResults/{from}/to/{to}")
+//        Call<JourneySearchResponse> getJourney(@Path("from") String from, @Path("to") String to, @Query("nationalSearch") boolean nationalSearch, @Query("timeIs") String timeIs, @Query("journeyPreference") String journeyPreference, @Query("app_id") String appId, @Query("app_key") String appKey);
+//    }
 
-        @GET("Journey/JourneyResults/{from}/to/{to}")
-        Call<JourneySearchResponse> getJourney(@Path("from") String from, @Path("to") String to, @Query("nationalSearch") boolean nationalSearch, @Query("timeIs") String timeIs, @Query("journeyPreference") String journeyPreference, @Query("app_id") String appId, @Query("app_key") String appKey);
-    }
+//    public class JourneySearchResponse {
+//        @SerializedName("$type")
+//        public String type;
+//
+//        public List<Journey> journeys;
+//    }
+//
+//    public class Journey {
+//        public List<Leg> legs;
+//    }
 
-    public class JourneySearchResponse {
-        @SerializedName("$type")
-        public String type;
+//    public class Leg {
+//        public String modeName;
+//        public String destinationName;
+//        public String instruction;
+//        public String departureTime;
+//        public String arrivalTime;
+//        public String duration;
+//        public List<StopPoint> path;
+//    }
 
-        public List<Journey> journeys;
-    }
+//    public class StopPoint {
+//        public double lat;
+//        public double lon;
+//    }
 
-    public class Journey {
-        public List<Leg> legs;
-    }
+//    public class TFLApiClient {
+//        private static final String BASE_URL = "https://api.tfl.gov.uk/";
+//
+//        private TFLService service;
+//
+//        public TFLService getClient() {
+//            if (service == null) {
+//                Retrofit retrofit = new Retrofit.Builder()
+//                        .baseUrl(BASE_URL)
+//                        .addConverterFactory(GsonConverterFactory.create())
+//                        .build();
+//
+//                service = retrofit.create(TFLService.class);
+//            }
+//            return service;
+//        }
+//    }
 
-    public class Leg {
-        public String modeName;
-        public String destinationName;
-        public String instruction;
-        public String departureTime;
-        public String arrivalTime;
-        public String duration;
-        public List<StopPoint> path;
-    }
+//    public interface TflApiService {
+//        @GET("Journey/JourneyResults/{from}/to/{to}")
+//        Call<JourneyPlannerResponse> getJourneyPlannerResponse(@Path("from") String from, @Path("to") String to, @Query("nationalSearch") boolean nationalSearch, @Query("date") String date, @Query("time") String time, @Query("timeIs") String timeIs, @Query("journeyPreference") String journeyPreference, @Query("mode") String mode, @Query("accessibilityPreference") String accessibilityPreference, @Query("fromIsWalking") boolean fromIsWalking, @Query("toIsWalking") boolean toIsWalking, @Query("walkingSpeed") String walkingSpeed, @Query("cyclePreference") String cyclePreference, @Query("adjustment") String adjustment, @Query("bikeProficiency") String bikeProficiency, @Query("alternativeCycle") boolean alternativeCycle, @Query("alternativeWalking") boolean alternativeWalking, @Query("applyHtmlMarkup") boolean applyHtmlMarkup, @Query("useMultiModalCall") boolean useMultiModalCall, @Query("walkingOptimization") String walkingOptimization, @Query("taxiOnlyTrip") boolean taxiOnlyTrip, @Query("walkingTime") int walkingTime);
+//    }
 
-    public class StopPoint {
-        public double lat;
-        public double lon;
-    }
-
-    public class TFLApiClient {
-        private static final String BASE_URL = "https://api.tfl.gov.uk/";
-
-        private TFLService service;
-
-        public TFLService getClient() {
-            if (service == null) {
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(BASE_URL)
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build();
-
-                service = retrofit.create(TFLService.class);
-            }
-            return service;
-        }
-    }
-
-    public interface TflApiService {
-        @GET("Journey/JourneyResults/{from}/to/{to}")
-        Call<JourneyPlannerResponse> getJourneyPlannerResponse(@Path("from") String from, @Path("to") String to, @Query("nationalSearch") boolean nationalSearch, @Query("date") String date, @Query("time") String time, @Query("timeIs") String timeIs, @Query("journeyPreference") String journeyPreference, @Query("mode") String mode, @Query("accessibilityPreference") String accessibilityPreference, @Query("fromIsWalking") boolean fromIsWalking, @Query("toIsWalking") boolean toIsWalking, @Query("walkingSpeed") String walkingSpeed, @Query("cyclePreference") String cyclePreference, @Query("adjustment") String adjustment, @Query("bikeProficiency") String bikeProficiency, @Query("alternativeCycle") boolean alternativeCycle, @Query("alternativeWalking") boolean alternativeWalking, @Query("applyHtmlMarkup") boolean applyHtmlMarkup, @Query("useMultiModalCall") boolean useMultiModalCall, @Query("walkingOptimization") String walkingOptimization, @Query("taxiOnlyTrip") boolean taxiOnlyTrip, @Query("walkingTime") int walkingTime);
-    }
-
-    public class JourneyPlannerResponse {
-        @SerializedName("$type")
-        @Expose
-        private String type;
-        @SerializedName("journeys")
-        @Expose
-        private List<Journey> journeys = null;
-        // getter and setter methods here
-    }
+//    public class JourneyPlannerResponse {
+//        @SerializedName("$type")
+//        @Expose
+//        private String type;
+//        @SerializedName("journeys")
+//        @Expose
+//        private List<Journey> journeys = null;
+//        // getter and setter methods here
+//    }
 
     public class Instruction {
         @SerializedName("$type")
